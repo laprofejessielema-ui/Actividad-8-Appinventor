@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taller Interactivo App Inventor: Proyecto Pong (8º Grado)</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --text: #333;
+            --border: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 500;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .timer-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .save-indicator {
+            background: #27ae60;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 48% 50%;
+            gap: 2%;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* VISOR LATERAL CON STICKY */
+        .sticky-viewer {
+            position: sticky;
+            top: 80px;
+            height: calc(100vh - 100px);
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .sticky-viewer.expanded {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 99999 !important;
+            border-radius: 0 !important;
+        }
+
+        .viewer-header-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #e2e8f0;
+            border-bottom: 1px solid var(--border);
+            padding: 0 10px 0 0;
+        }
+
+        .viewer-tabs {
+            display: flex;
+            flex: 1;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+        }
+
+        .expand-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .viewer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #ffffff;
+        }
+
+        .view-content {
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        /* MANUAL DE CONSULTA */
+        .manual-container {
+            font-size: 0.95rem;
+            color: #2c3e50;
+        }
+
+        .manual-title {
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 6px;
+            margin-bottom: 15px;
+            font-size: 1.25rem;
+        }
+
+        .manual-section {
+            background: #f8fafc;
+            border-left: 5px solid var(--secondary);
+            padding: 14px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .manual-section h4 {
+            color: var(--primary);
+            margin-bottom: 6px;
+            font-size: 1.05rem;
+        }
+
+        .border-table {
+            width: 100%;
+            font-size: 0.9rem;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #fff;
+        }
+
+        .border-table th, .border-table td {
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            text-align: left;
+        }
+
+        .border-table th {
+            background: #334155;
+            color: white;
+        }
+
+        .border-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+        }
+        .bg-red { background-color: #e74c3c; }
+        .bg-blue { background-color: #3498db; }
+        .bg-green { background-color: #2ecc71; }
+        .bg-orange { background-color: #e67e22; }
+
+        .coords-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        /* EJERCICIOS */
+        .questions-panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+
+        .panel-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .reset-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .level-header {
+            background: var(--primary);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin: 25px 0 15px 0;
+            font-size: 1.15rem;
+            font-weight: bold;
+        }
+
+        .level-header:first-child {
+            margin-top: 0;
+        }
+
+        .exercise-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .exercise-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .options-list {
+            list-style: none;
+            margin-top: 8px;
+        }
+
+        .options-list li {
+            margin-bottom: 8px;
+        }
+
+        .hint-btn {
+            background: #f1c40f;
+            color: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .hint-text {
+            display: none;
+            background: #fef9e7;
+            border: 1px solid #f9e79f;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            color: #7d6608;
+        }
+
+        textarea {
+            width: 100%;
+            height: 95px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: vertical;
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+
+        .student-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #ebf5fb;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .student-inputs input {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .submit-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #219150;
+        }
+
+        @media print {
+            header, .sticky-viewer, .hint-btn, .submit-btn, .expand-btn, .reset-btn {
+                display: none !important;
+            }
+            .container {
+                display: block;
+            }
+            .questions-panel {
+                border: none;
+                box-shadow: none;
+            }
+            textarea {
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <h1>Taller Interactivo App Inventor: Proyecto Pong</h1>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <span id="saveIndicator" class="save-indicator">💾 Guardado automáticamente</span>
+                <div class="timer-box">
+                    ⏱️ Tiempo Restante: <span id="timer">60:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- PANEL IZQUIERDO: VISOR -->
+        <div class="sticky-viewer" id="stickyViewer">
+            <div class="viewer-header-tools">
+                <div class="viewer-tabs">
+                    <button class="tab-btn active" onclick="switchTab('diseno')">📱 Diseñador</button>
+                    <button class="tab-btn" onclick="switchTab('bloques')">🧩 Bloques</button>
+                    <button class="tab-btn" onclick="switchTab('manual')">📖 Manual de Consulta</button>
+                </div>
+                <button class="expand-btn" onclick="toggleExpand()">⤢ Pantalla Completa</button>
+            </div>
+            
+            <div class="viewer-body">
+                <!-- VISTA 1: DISEÑO -->
+                <div id="tab-diseno" class="view-content active">
+                    <p style="font-size:0.9rem; color:#64748b; margin-bottom:10px;">Vista del Diseñador en Screen1:</p>
+                    <svg viewBox="0 0 400 500" style="width:100%; max-height:550px; border:1px solid #cbd5e1; background:#fff; border-radius:6px;">
+                        <rect x="10" y="10" width="380" height="480" rx="10" fill="#2980b9" />
+                        <rect x="25" y="40" width="350" height="300" fill="#27ae60" stroke="#fff" stroke-width="2"/>
+                        <circle cx="200" cy="190" r="30" stroke="#fff" stroke-width="2" fill="none"/>
+                        <line x1="25" y1="190" x2="375" y2="190" stroke="#fff" stroke-width="2"/>
+                        <circle cx="120" cy="130" r="10" fill="#fff"/>
+                        <rect x="150" y="310" width="100" height="15" rx="5" fill="#333"/>
+                        <text x="200" y="375" text-anchor="middle" font-size="18" font-weight="bold" fill="#fff">Puntos: 0</text>
+                        <rect x="50" y="400" width="60" height="40" rx="5" fill="#ecf0f1"/>
+                        <text x="80" y="425" text-anchor="middle" font-size="20">◀</text>
+                        <rect x="150" y="400" width="100" height="40" rx="5" fill="#ecf0f1"/>
+                        <text x="200" y="425" text-anchor="middle" font-size="14" font-weight="bold">EMPEZAR</text>
+                        <rect x="290" y="400" width="60" height="40" rx="5" fill="#ecf0f1"/>
+                        <text x="320" y="425" text-anchor="middle" font-size="20">▶</text>
+                    </svg>
+                    <div style="margin-top:10px; font-size:0.85rem; background:#f1f5f9; padding:8px; border-radius:4px;">
+                        <b>Archivos de Medios Subidos:</b> Escenariofutbol.png, Paleta.png, derecha.jpeg, izquierda.jpeg, pelotavoley.png.
+                    </div>
+                </div>
+
+                <!-- VISTA 2: BLOQUES -->
+                <div id="tab-bloques" class="view-content">
+                    <p style="font-size:0.9rem; color:#64748b; margin-bottom:10px;">Código de la aplicación en bloques:</p>
+                    <div style="background:#1e293b; color:#f8fafc; padding:15px; border-radius:6px; font-family:monospace; font-size:0.9rem; overflow-x:auto;">
+                        <p style="color:#f1c40f;">// Inicialización</p>
+                        <p>inicializar global <b>Puntos</b> como <b>0</b></p>
+                        <br>
+                        <p style="color:#38bdf8;">// Eventos de Movimiento de la Paleta</p>
+                        <p>cuando <b>Izquierda.Clic</b> hacer:</p>
+                        <p style="padding-left:20px;">poner Paleta.X como (Paleta.X - 15)</p>
+                        <br>
+                        <p>cuando <b>Derecha.Clic</b> hacer:</p>
+                        <p style="padding-left:20px;">poner Paleta.X como (Paleta.X + 15)</p>
+                        <br>
+                        <p style="color:#38bdf8;">// Evento Botón Inicio</p>
+                        <p>cuando <b>BtnInicio.Clic</b> hacer:</p>
+                        <p style="padding-left:20px;">llamar Pelota.MoverA(x: Lienzo1.Ancho/2, y: 20)</p>
+                        <p style="padding-left:20px;">poner Pelota.Visible como verdadero</p>
+                        <p style="padding-left:20px;">poner Pelota.Velocidad como 10</p>
+                        <p style="padding-left:20px;">poner Pelota.Direccion como 45</p>
+                        <p style="padding-left:20px;">llamar Paleta.MoverA(x: Lienzo1.Ancho/2, y: 365)</p>
+                        <br>
+                        <p style="color:#38bdf8;">// Colisión Paleta y Pelota</p>
+                        <p>cuando <b>Paleta.EnColisiónCon(otro)</b> hacer:</p>
+                        <p style="padding-left:20px;">poner lblPuntos.Texto como (global Puntos + 1)</p>
+                        <br>
+                        <p style="color:#38bdf8;">// Detección y Control de Bordes</p>
+                        <p>cuando <b>Pelota.BordeAlcanzado(borde)</b> hacer:</p>
+                        <p style="padding-left:20px;">si borde == -1 entonces:</p>
+                        <p style="padding-left:40px;">poner Pelota.Visible como falso</p>
+                        <p style="padding-left:40px;">poner Pelota.Velocidad como 0</p>
+                        <p style="padding-left:40px;">Notificador1.MostrarAviso("Se terminó el juego")</p>
+                        <p style="padding-left:40px;">poner lblPuntos.Texto como (global Puntos = 0)</p>
+                        <p style="padding-left:20px;">si no:</p>
+                        <p style="padding-left:40px;">llamar Pelota.Botar(borde)</p>
+                    </div>
+                </div>
+
+                <!-- VISTA 3: MANUAL DE CONSULTA -->
+                <div id="tab-manual" class="view-content">
+                    <div class="manual-container">
+                        <h3 class="manual-title">📖 Manual Teórico de Consulta - App Inventor</h3>
+                        
+                        <div class="manual-section">
+                            <h4>1. Conceptos Fundamentales</h4>
+                            <p><b>Eventos (Bloques Amarillos):</b> Desencadenadores que ejecutan código al ocurrir una acción (ej. <i>cuando Izquierda.Clic</i>, <i>cuando Paleta.EnColisiónCon</i>).</p>
+                            <p style="margin-top:6px;"><b>Propiedades (Bloques Verdes):</b> Atributos que ajustan características como <i>X, Y, Velocidad, Dirección, Visibilidad</i>.</p>
+                            <p style="margin-top:6px;"><b>Variables:</b> Almacenes de memoria usados para guardar puntajes o datos cambiantes.</p>
+                        </div>
+
+                        <div class="manual-section">
+                            <h4>2. Códigos Oficiales de Bordes en el Lienzo</h4>
+                            <p>Valores devueltos en el parámetro <code>borde</code> del evento <code>BordeAlcanzado</code>:</p>
+                            
+                            <table class="border-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Ubicación del Borde</th>
+                                        <th>Significado en el Juego</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="border-badge bg-red">-1</span></td>
+                                        <td><b>Inferior (Abajo)</b></td>
+                                        <td>La pelota pasa la paleta y cae. Fin de la partida.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="border-badge bg-blue">1</span></td>
+                                        <td><b>Superior (Arriba)</b></td>
+                                        <td>Techo del lienzo. Debe rebotar.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="border-badge bg-green">3</span></td>
+                                        <td><b>Derecho</b></td>
+                                        <td>Pared derecha. Debe rebotar.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="border-badge bg-orange">-3</span></td>
+                                        <td><b>Izquierdo</b></td>
+                                        <td>Pared izquierda. Debe rebotar.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="manual-section">
+                            <h4>3. Coordenadas Cartesianas (Ejes X, Y)</h4>
+                            <div class="coords-grid">
+                                <div>
+                                    <b>Eje Horizontal (X):</b>
+                                    <br>• X = 0 está en el borde izquierdo.
+                                    <br>• Para ir a la <b>Derecha</b>: X = X + 15
+                                    <br>• Para ir a la <b>Izquierda</b>: X = X - 15
+                                </div>
+                                <div>
+                                    <b>Eje Vertical (Y):</b>
+                                    <br>• Y = 0 está en el borde superior (arriba).
+                                    <br>• Hacia <b>Abajo</b>: El valor de Y aumenta (+Y).
+                                    <br>• Hacia <b>Arriba</b>: El valor de Y disminuye (-Y).
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="manual-section">
+                            <h4>4. Patrón para Modificar el Puntaje</h4>
+                            <ol style="margin-left:20px; margin-top:5px;">
+                                <li>Actualizar la variable global en memoria: <br><code>poner global Puntos como (tomar global Puntos + 1)</code></li>
+                                <li>Actualizar la etiqueta en la interfaz: <br><code>poner lblPuntos.Texto como tomar global Puntos</code></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL DERECHO: EJERCICIOS CON AUTOGUARDADO -->
+        <div class="questions-panel">
+            <div class="panel-top-bar">
+                <h2 style="color:var(--primary);">Registro de Integrantes</h2>
+                <button class="reset-btn" onclick="clearProgress()">🗑️ Limpiar Respuestas</button>
+            </div>
+            
+            <div class="student-inputs">
+                <div>
+                    <label>Estudiante 1:</label>
+                    <input type="text" id="st1" class="saveable" placeholder="Nombre completo">
+                </div>
+                <div>
+                    <label>Estudiante 2:</label>
+                    <input type="text" id="st2" class="saveable" placeholder="Nombre completo">
+                </div>
+            </div>
+
+            <!-- NIVEL 1 -->
+            <div class="level-header">Nivel 1: Lectura del Diseñador y Componentes (6 Ejercicios)</div>
+            
+            <div class="exercise-card">
+                <div class="exercise-title">1.1. Identificación del Lienzo</div>
+                <p>¿Qué componente principal actúa como contenedor y escenario gráfico permitiendo el movimiento libre de los elementos?</p>
+                <textarea id="q1_1" class="saveable" placeholder="Escriban su respuesta aquí..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">1.2. Selección de Componentes de Juego (Múltiple Opción)</div>
+                <p>Para incluir la Pelota y la Paleta con capacidad de movimiento y detección de colisiones se usó el componente:</p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q1_2" value="A" class="saveable-radio"> A) Botón simple con imagen personalizada.</label></li>
+                    <li><label><input type="radio" name="q1_2" value="B" class="saveable-radio"> B) SpritePelota y Ball (Pelota/Sprite) dentro del Lienzo.</label></li>
+                    <li><label><input type="radio" name="q1_2" value="C" class="saveable-radio"> C) Etiqueta con fondo redondeado.</label></li>
+                </ul>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">1.3. Componentes Invisibles</div>
+                <p>Nombren el componente invisible presente en la jerarquía del diseñador y expliquen para qué sirve en la aplicación.</p>
+                <textarea id="q1_3" class="saveable" placeholder="Escriban su respuesta aquí..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">1.4. Organización de Botones (Verdadero o Falso)</div>
+                <p><b>Afirmación:</b> Los botones de movimiento (Izquierda y Derecha) se ubicaron dentro de una DisposiciónHorizontal para quedar alineados de forma paralela en la pantalla.</p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q1_4" value="V" class="saveable-radio"> Verdadero</label></li>
+                    <li><label><input type="radio" name="q1_4" value="F" class="saveable-radio"> Falso</label></li>
+                </ul>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">1.5. Análisis del Catálogo de Medios Subidos</div>
+                <p>Observen el panel de Medios. Hay una imagen llamada <code>pelotavoley.png</code> subida pero la pantalla muestra una pelota blanca simple. ¿Por qué ocurre esto según las propiedades del diseñador?</p>
+                <textarea id="q1_5" class="saveable" placeholder="Escriban su respuesta aquí..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">1.6. Renombrado de Componentes</div>
+                <p>¿Por qué es una buena práctica de programación renombrar los componentes (ej. <code>BtnInicio</code>, <code>lblPuntos</code>) en lugar de dejarlos con sus nombres por defecto (<code>Boton1</code>, <code>Etiqueta1</code>)?</p>
+                <textarea id="q1_6" class="saveable" placeholder="Escriban su respuesta aquí..."></textarea>
+            </div>
+
+            <!-- NIVEL 2 -->
+            <div class="level-header">Nivel 2: Análisis del Flujo de Ejecución y Eventos (6 Ejercicios)</div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">2.1. Dirección del Saque Inicial</div>
+                <p>Al presionar <b>BtnInicio</b>, el código establece <code>Pelota.Direccion</code> en 45 grados. ¿Hacia qué zona de la pantalla sale disparada la pelota?</p>
+                <textarea id="q2_1" class="saveable" placeholder="Explicar la trayectoria según los 45°..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">2.2. Posicionamiento mediante Coordenadas</div>
+                <p>En el evento <b>BtnInicio.Clic</b>, la Paleta se mueve a <code>y: 365</code>. ¿Por qué se utiliza una coordenada Y fija tan alta en lugar de 20?</p>
+                <textarea id="q2_2" class="saveable" placeholder="Escriban su análisis de la coordenada Y..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">2.3. Código del Borde Inferior</div>
+                <p>¿Por qué la condición evalúa <code>borde == -1</code> dentro del evento <i>Pelota.BordeAlcanzado</i>?</p>
+                <textarea id="q2_3" class="saveable" placeholder="Describan qué borde representa el número -1..."></textarea>
+                <button class="hint-btn" onclick="toggleHint('h2_3')">💡 Ver pista</button>
+                <div id="h2_3" class="hint-text">Consulten el Manual de Consulta (-1 representa el borde inferior de la pantalla).</div>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">2.4. Desplazamiento Horizontal de la Paleta (Múltiple Opción)</div>
+                <p>¿Qué sucede técnicamente cuando la pareja presiona el botón <b>Izquierda</b>?</p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q2_4" value="A" class="saveable-radio"> A) El valor Y de la paleta disminuye 15 píxeles.</label></li>
+                    <li><label><input type="radio" name="q2_4" value="B" class="saveable-radio"> B) El valor X de la paleta disminuye 15 píxeles moviéndola a la izquierda.</label></li>
+                    <li><label><input type="radio" name="q2_4" value="C" class="saveable-radio"> C) La paleta se oculta y vuelve a aparecer más lejos.</label></li>
+                </ul>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">2.5. Función del Bloque Botar</div>
+                <p>Expliquen la diferencia entre ejecutar <code>llamar Pelota.Botar(borde)</code> versus detener la pelota cuando toca los bordes laterales (3 o -3) o superior (1).</p>
+                <textarea id="q2_5" class="saveable" placeholder="Escriban su respuesta aquí..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">2.6. Estado de Visibilidad al Iniciar</div>
+                <p>¿Por qué el botón <b>BtnInicio</b> incluye explícitamente el bloque <code>poner Pelota.Visible como verdadero</code>?</p>
+                <textarea id="q2_6" class="saveable" placeholder="Escriban su respuesta aquí..."></textarea>
+            </div>
+
+            <!-- NIVEL 3 -->
+            <div class="level-header">Nivel 3: Detección de Bugs y Razonamiento Lógico (6 Ejercicios)</div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">3.1. Bug #1: Error en el Incremento del Contador</div>
+                <p>Al colisionar con la paleta, el texto en pantalla cambia pero la variable interna <code>Puntos</code> nunca se incrementa en memoria. ¿Cuál es la falla exacta en los bloques de <b>Paleta.EnColisiónCon</b>?</p>
+                <textarea id="q3_1" class="saveable" placeholder="Analicen qué bloque falta para modificar la variable global Puntos..."></textarea>
+                <button class="hint-btn" onclick="toggleHint('h3_1')">💡 Ver pista</button>
+                <div id="h3_1" class="hint-text">Comparen lo que hace el bloque con el punto 4 del Manual de Consulta.</div>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">3.2. Bug #2: Asignación Errónea al Perder</div>
+                <p>En el borde -1, el programa ejecuta <code>poner lblPuntos.Texto como (global Puntos = 0)</code>. ¿Por qué esta comparación es un error conceptual grave?</p>
+                <textarea id="q3_2" class="saveable" placeholder="Explicar la diferencia entre asignar y comparar con '='..."></textarea>
+                <button class="hint-btn" onclick="toggleHint('h3_2')">💡 Ver pista</button>
+                <div id="h3_2" class="hint-text">El bloque igual (=) devuelve 'verdadero' o 'falso', no asigna el número 0 a la variable.</div>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">3.3. Bug #3: Salida de la Paleta Fuera de la Pantalla</div>
+                <p>Si se presiona repetidamente el botón <b>Izquierda</b>, la paleta desaparece por el borde izquierdo (-3). ¿Qué condición de seguridad (bloque <i>si</i>) debería agregarse antes de restar 15 a X?</p>
+                <textarea id="q3_3" class="saveable" placeholder="Escriban la regla lógica de control (ej. si Paleta.X > 0)..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">3.4. Bug #4: Ausencia de Rebote en la Paleta</div>
+                <p>Al tocar la paleta, la pelota suma puntos pero continúa de largo en su trayectoria sin rebotar hacia arriba. ¿Qué bloque falta dentro del evento <b>Paleta.EnColisiónCon</b>?</p>
+                <textarea id="q3_4" class="saveable" placeholder="Escriban la acción que debe realizar la pelota al tocar la paleta..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">3.5. Analizar Comportamiento al Reiniciar</div>
+                <p>Si el usuario presiona el botón <b>EMPEZAR</b> en medio de una partida en curso, ¿qué sucede con los puntos actuales según la programación vista?</p>
+                <textarea id="q3_5" class="saveable" placeholder="Escriban su respuesta aquí..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">3.6. Bug #5: Velocidad Constante Permanente</div>
+                <p>La velocidad se fija en 10 al iniciar y nunca cambia. Si quisieran que el juego se vuelva más difícil con cada colisión exitosa, ¿dónde y cómo modificarían esa propiedad?</p>
+                <textarea id="q3_6" class="saveable" placeholder="Escriban su propuesta de modificación..."></textarea>
+            </div>
+
+            <!-- NIVEL 4 -->
+            <div class="level-header">Nivel 4: Propuestas de Rediseño y Especificación Técnica (5 Consignas)</div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">4.1. Rediseño #1: Propuesta de Cambio de Modos de Juego</div>
+                <p>Escriban la letra descriptiva de una nueva mejora para la aplicación donde la pareja de estudiantes deba elegir entre 2 niveles de dificultad (Fácil / Difícil). Indiquen los componentes que deben agregar en el Diseñador y la lógica de programación para cada uno.</p>
+                <textarea id="q4_1" class="saveable" placeholder="Escriban aquí la especificación detallada del cambio, componentes y programación..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">4.2. Rediseño #2: Programación Completa de la Solución de Puntos</div>
+                <p>Escriban con nombres de bloques exactos cómo corregir completamente el bug de los puntos al colisionar con la paleta y al caer al suelo (borde -1).</p>
+                <textarea id="q4_2" class="saveable" placeholder="Describan bloque por bloque el código corregido..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">4.3. Rediseño #3: Límite de Bordes en Movimiento de Paleta</div>
+                <p>Escriban la estructura lógica en pseudocódigo o bloques para restringir el movimiento tanto para el botón Izquierda como para el botón Derecha para que la paleta jamás salga del Lienzo.</p>
+                <textarea id="q4_3" class="saveable" placeholder="Escriban las condiciones 'si Paleta.X...' para ambos botones..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">4.4. Rediseño #4: Sistema de VIDAS (3 Oportunidades)</div>
+                <p>Diseñen la propuesta para incorporar un sistema de 3 vidas. Escriban qué componentes nuevos agregarían en la interfaz y cómo cambiaría la programación del evento <code>Pelota.BordeAlcanzado (borde == -1)</code>.</p>
+                <textarea id="q4_4" class="saveable" placeholder="Especificar variables, etiquetas y condicionales a utilizar..."></textarea>
+            </div>
+
+            <div class="exercise-card">
+                <div class="exercise-title">4.5. Rediseño #5: Saque Aleatorio Dinámico</div>
+                <p>Actualmente el saque sale siempre a 45 grados. Escriban los bloques necesarios para que la Pelota salga en un ángulo aleatorio hacia arriba (entre 30 y 150 grados) cada vez que se presione el botón EMPEZAR.</p>
+                <textarea id="q4_5" class="saveable" placeholder="Escriban los bloques matemáticos y de propiedades a utilizar..."></textarea>
+            </div>
+
+            <button class="submit-btn" onclick="generateReport()">📄 Guardar y Generar Reporte Imprimible</button>
+        </div>
+    </div>
+
+    <script>
+        // PESTAÑAS DEL VISOR
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const contents = document.querySelectorAll('.view-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+
+            if (tabName === 'diseno') {
+                tabs[0].classList.add('active');
+                document.getElementById('tab-diseno').classList.add('active');
+            } else if (tabName === 'bloques') {
+                tabs[1].classList.add('active');
+                document.getElementById('tab-bloques').classList.add('active');
+            } else if (tabName === 'manual') {
+                tabs[2].classList.add('active');
+                document.getElementById('tab-manual').classList.add('active');
+            }
+        }
+
+        // PANTALLA COMPLETA
+        function toggleExpand() {
+            const viewer = document.getElementById('stickyViewer');
+            const btn = document.querySelector('.expand-btn');
+            
+            if (viewer.classList.contains('expanded')) {
+                viewer.classList.remove('expanded');
+                btn.textContent = '⤢ Pantalla Completa';
+            } else {
+                viewer.classList.add('expanded');
+                btn.textContent = '↙ Restaurar Tamaño';
+            }
+        }
+
+        // MOSTRAR PISTAS
+        function toggleHint(hintId) {
+            const hint = document.getElementById(hintId);
+            if (hint.style.display === 'block') {
+                hint.style.display = 'none';
+            } else {
+                hint.style.display = 'block';
+            }
+        }
+
+        // CRONÓMETRO 60 MINUTOS CON PERSISTENCIA
+        let totalSeconds = localStorage.getItem('pong_timer') ? parseInt(localStorage.getItem('pong_timer')) : 60 * 60;
+        const timerElement = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            timerElement.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            localStorage.setItem('pong_timer', totalSeconds);
+
+            if (totalSeconds <= 0) {
+                clearInterval(countdown);
+                alert("¡El tiempo de la clase (60 min) ha finalizado!");
+            } else {
+                totalSeconds--;
+            }
+        }, 1000);
+
+        // AUTOGUARDADO EN LOCALSTORAGE
+        const saveableInputs = document.querySelectorAll('.saveable');
+        const saveableRadios = document.querySelectorAll('.saveable-radio');
+        const saveIndicator = document.getElementById('saveIndicator');
+
+        function triggerSaveNotice() {
+            saveIndicator.style.display = 'inline-block';
+            setTimeout(() => {
+                saveIndicator.style.display = 'none';
+            }, 1200);
+        }
+
+        // Guardar Inputs y Textareas
+        saveableInputs.forEach(input => {
+            const savedVal = localStorage.getItem('pong_' + input.id);
+            if (savedVal !== null) {
+                input.value = savedVal;
+            }
+
+            input.addEventListener('input', () => {
+                localStorage.setItem('pong_' + input.id, input.value);
+                triggerSaveNotice();
+            });
+        });
+
+        // Guardar Opciones Múltiples (Radios)
+        saveableRadios.forEach(radio => {
+            const savedVal = localStorage.getItem('pong_radio_' + radio.name);
+            if (savedVal && radio.value === savedVal) {
+                radio.checked = true;
+            }
+
+            radio.addEventListener('change', () => {
+                if (radio.checked) {
+                    localStorage.setItem('pong_radio_' + radio.name, radio.value);
+                    triggerSaveNotice();
+                }
+            });
+        });
+
+        // Limpiar Respuestas
+        function clearProgress() {
+            if (confirm("¿Están seguros de que desean borrar todas las respuestas para empezar de nuevo?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // REPORTE IMPRIMIBLE
+        function generateReport() {
+            const st1 = document.getElementById('st1').value;
+            const st2 = document.getElementById('st2').value;
+
+            if (!st1 || !st2) {
+                alert("Por favor completen los nombres de ambos integrantes antes de generar el reporte.");
+                return;
+            }
+
+            window.print();
+        }
+    </script>
+</body>
+</html>
